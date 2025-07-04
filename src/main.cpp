@@ -7,7 +7,7 @@
 #define VAUTO_SWITCH V23
 #define VSTART_LEVEL V38
 #define VSTOP_LEVEL V39
-#define VWATER_LEVEL_NOW V2
+#define VWATER_LEVEL_NOW V1
 #define VPUMP_TEMP V21
 #define VPUMP_HUM V22
 
@@ -88,11 +88,18 @@ BLYNK_WRITE(VSTOP_LEVEL)
 
 BLYNK_WRITE(VWATER_LEVEL_NOW)
 {
-  water_level_now = param.asInt();
+  water_level_now = param.asFloat();
   Serial.print("Water Level Now: ");
   Serial.println(water_level_now);
 }
+BLYNK_DISCONNECTED()
+{
+  Serial.println("Disconnected from Blynk!");
 
+  Blynk.virtualWrite(statusNode, 0);
+
+  digitalWrite(LED_STATUS, HIGH);
+}
 // =========================== SETUP ===========================
 void setup()
 {
@@ -122,10 +129,13 @@ void setup()
   if (Blynk.connect())
   {
     Serial.println("Blynk Connected");
+    Blynk.syncVirtual(VWATER_LEVEL_NOW);
   }
 
   digitalWrite(LED_STATUS, LOW);
   Blynk.virtualWrite(statusNode, 1);
+  Blynk.virtualWrite(VPUMP_SWITCH, pump_switch);
+  Blynk.virtualWrite(VAUTO_SWITCH, auto_switch);
 
   Wire.begin(21, 22);
   if (!bme.begin(0x76))
